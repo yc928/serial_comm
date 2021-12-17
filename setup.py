@@ -1,6 +1,6 @@
 from setuptools import setup
 
-package_name = 'serial_sever'
+package_name = 'serial_comm'
 
 setup(
     name=package_name,
@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'serial_sever_node = serial_sever.serial_sever_node:main'
+            'serial_sever_node = serial_comm.serial_sever_node:main'
         ],
     },
 )
