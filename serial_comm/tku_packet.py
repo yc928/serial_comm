@@ -22,7 +22,7 @@ class TKUPacket():
                                      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
                                      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x45], dtype=np.uint8)
-        self.walk_params = {'continuous': self.load_params('continuous_params'), 'lc_up': self.load_params('lc_up_params'), 'lc_down': self.load_params('lc_down_params')} 
+        self.walk_params = {}#{'continuous': self.load_params('continuous_params'), 'lc_up': self.load_params('lc_up_params'), 'lc_down': self.load_params('lc_down_params')} 
 
     def update_imu_packet(self, imu_info):
         self.imu_packet[-3] = (imu_info.gain_set << 3) | (imu_info.force_state << 2) | (imu_info.imu_reset <<1) | (imu_info.desire_set)

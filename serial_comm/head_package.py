@@ -23,7 +23,7 @@ class HeadPacket():
             
 
     def update_head_packet(self, head_info):
-        print(head_info)
+        #print(head_info)
         self.head_info[head_info.id].speed = head_info.speed
         self.head_info[head_info.id].position = head_info.position
 

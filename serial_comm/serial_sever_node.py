@@ -1,12 +1,14 @@
 import rclpy
 import numpy as np
+import time
 
 from rclpy.node import Node
-from serial_sever.serial_sever import SerialSever
+from serial_comm.serial_sever import SerialSever
 
 from std_msgs.msg import Bool
 from tku_msgs.msg import HeadPackage
 from tku_msgs.msg import SensorSet
+from tku_msgs.msg import SensorPackage
 from tku_msgs.msg import Interface
 from tku_msgs.msg import Parameter
 
@@ -47,15 +49,26 @@ class SerialPacket(Node):
         self.change_walk_data_sub
 
         self.save_walk_params_sub = self.create_subscription(
-                parameter,
+                Parameter,
                 '/web/parameter_Topic',
                 self.save_params_callback,
                 10)
         self.save_walk_params_sub
+        
+        self.imu_data_pub = self.create_publisher(SensorPackage, '/package/sensorpackage', 1)
 
         self.load_walk_params_srv = self.create_service(WalkingGaitParameter, '/web/LoadWalkingGaitParameter', self.load_walk_params_callback) 
 
         self.serial_server = SerialSever()
+        
+        
+    def imu_pub(self, data):
+        sensor_package = SensorPackage()
+        for i in range(len(data)):
+            sensor_package.imudata.append(data[i])
+            #print(data)
+        self.imu_data_pub.publish(sensor_package)
+        time.sleep(0.05)
     
     def head_callback(self, head_info):
         self.serial_server.tx_head_packet(head_info)
@@ -83,11 +96,13 @@ def main(args=None):
 
     while rclpy.ok():
         #serial_sever_node.serial_sever.rx_head_packet()
-        print('main')
-        serial_sever_node.serial_server.tx_get_imu_packet()
-        serial_sever_node.serial_server.rx_imu_packet()
-        rclpy.spin_once(serial_server_node)
-    #rclpy.spin(serial_sever_node)
+        #print('main')
+        serial_server_node.serial_server.tx_get_imu_packet()
+        imu_data = serial_server_node.serial_server.rx_imu_packet()
+        serial_server_node.imu_pub(imu_data)
+        #print("spin")
+        #rclpy.spin_once(serial_server_node)
+    rclpy.spin(serial_sever_node)
 
     serial_server_node.destroy_node()
 

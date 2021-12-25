@@ -2,8 +2,8 @@ import numpy as np
 import serial
 import time
 
-from serial_sever.head_package import HeadPacket
-from serial_sever.tku_packet import TKUPacket
+from serial_comm.head_package import HeadPacket
+from serial_comm.tku_packet import TKUPacket
 
 
 class SerialSever():
@@ -15,17 +15,17 @@ class SerialSever():
     def ini_serial(self):
         #self.head_serial = serial.Serial(port='/dev/ttyUSB1', baudrate=115200, bytesize=8, timeout=.1)
         self.walk_serial = None
-        self.head_serial = None
-        self.imu_serial = serial.Serial(port='/dev/ttyUSB0', baudrate=115200, bytesize=8, timeout=.1)
-
+        self.head_serial = serial.Serial(port='/dev/ttyS1', baudrate=115200, bytesize=8, timeout=.1)
+        self.imu_serial = serial.Serial(port='/dev/ttyS0', baudrate=115200, bytesize=8, timeout=.1)
+        
     def tx_head_packet(self, head_info):
         self.head_serial.write(self.head_motor.torque.tobytes())
-        time.sleep(0.05)
+        time.sleep(0.005)
         self.head_motor.update_head_packet(head_info)
         self.head_serial.write(self.head_motor.packet.tobytes())
-        time.sleep(0.05)
-        print(self.head_motor.torque.tobytes())
-        print(self.head_motor.packet.tobytes())
+        time.sleep(0.005)
+        #print(self.head_motor.torque.tobytes())
+        #print(self.head_motor.packet.tobytes())
 
     def tx_imu_packet(self, imu_info):
         self.tku_packet.update_imu_packet(imu_info)
@@ -60,13 +60,15 @@ class SerialSever():
 #               time.sleep(0.05)
 
     def rx_imu_packet(self):
+        #print("rx_imu_packet")
         data_ready = False
         packet, tmp_packet = [], []
         imu_data, imu_data_tmp = [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]
         if self.imu_serial.inWaiting():
             tmp_packet = self.imu_serial.read(14)
+            #print(tmp_packet)
             for i in range(len(tmp_packet)):
-                if tmp_packet[i] == 0x53 && tmp_packet[i+1] == 0x54 && tmp_packet[i+2] == 0xF7:
+                if tmp_packet[i] == 0x53 and tmp_packet[i+1] == 0x54 and tmp_packet[i+2] == 0xF7:
                     packet_start = i
                     data_ready = True
 
@@ -74,12 +76,14 @@ class SerialSever():
                 for i in range(14):
                     packet.append(tmp_packet[packet_start + i])
 
-            for i in range(3):
-                imu_data_tmp[i] = (packet[i+3] << 8) | (packet[i+3])
-                if imu_data_tmp[i] & 0x8000:
-                    imu_data[i] = (~(imu_data_tmp[i] & 0x7FFF) + 1) / 100.0
-                else:
-                    imu_data[i] = imu_data_tmp[i] / 100.0
+                for i in range(3):
+                    imu_data_tmp[i] = (packet[i+3] << 8) | (packet[i+3])
+                    if imu_data_tmp[i] & 0x8000:
+                        imu_data[i] = (~(imu_data_tmp[i] & 0x7FFF) + 1) / 100.0
+                    else:
+                        imu_data[i] = imu_data_tmp[i] / 100.0
+                    #print(imu_data[i])
+            return imu_data
 #        while True:
 #        if self.imu_serial.inWaiting():
 #            value = self.imu_serial.read(14)
