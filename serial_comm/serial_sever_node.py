@@ -1,3 +1,4 @@
+import threading
 import rclpy
 import numpy as np
 import time
@@ -89,11 +90,16 @@ class SerialPacket(Node):
         response.x_swing_range, response.y_swing_range, response.z_swing_range, response.period_t, response.period_t2, response.sample_time, response.osc_lockrange, response.base_default_z, response.y_swing_shift, response.x_swing_com, response.base_lift_z = load_params(mode)
 
 
+def spin_thread(node):
+    rclpy.spin(node)
+    
 def main(args=None):
     rclpy.init(args=args)
 
     serial_server_node = SerialPacket()
-
+    
+    _spin_thread = threading.Thread(target=spin_thread, args=(serial_server_node,))
+    _spin_thread.start()
     while rclpy.ok():
         #serial_sever_node.serial_sever.rx_head_packet()
         #print('main')
@@ -102,9 +108,9 @@ def main(args=None):
         serial_server_node.imu_pub(imu_data)
         #print("spin")
         #rclpy.spin_once(serial_server_node)
-    rclpy.spin(serial_sever_node)
+    #rclpy.spin(serial_sever_node)
 
-    serial_server_node.destroy_node()
+    serial_sever_node.destroy_node()
 
     rclpy.shutdown()
 

@@ -60,36 +60,18 @@ class SerialSever():
 #               time.sleep(0.05)
 
     def rx_imu_packet(self):
-        #print("rx_imu_packet")
-        data_ready = False
-        packet, tmp_packet = [], []
-        imu_data, imu_data_tmp = [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]
+        imu_data = [0, 0, 0]
         if self.imu_serial.inWaiting():
-            tmp_packet = self.imu_serial.read(14)
-            #print(tmp_packet)
-            for i in range(len(tmp_packet)):
-                if tmp_packet[i] == 0x53 and tmp_packet[i+1] == 0x54 and tmp_packet[i+2] == 0xF7:
-                    packet_start = i
-                    data_ready = True
-
-            if data_ready:
-                for i in range(14):
-                    packet.append(tmp_packet[packet_start + i])
-
-                for i in range(3):
-                    imu_data_tmp[i] = (packet[i+3] << 8) | (packet[i+3])
-                    if imu_data_tmp[i] & 0x8000:
-                        imu_data[i] = (~(imu_data_tmp[i] & 0x7FFF) + 1) / 100.0
-                    else:
-                        imu_data[i] = imu_data_tmp[i] / 100.0
-                    #print(imu_data[i])
-            return imu_data
-#        while True:
-#        if self.imu_serial.inWaiting():
-#            value = self.imu_serial.read(14)
-#            print('-----')
-#            print(value)
-#            time.sleep(0.05)
+            packet = self.imu_serial.read(28)
+            if len(packet) == 28:
+                if packet[0] == 0x53 and packet[1] == 0x54 and packet[2] == 0xF7 and packet[27] == 0x45:
+                    for i in range(3):
+                        idx = i*2
+                        imu_data[i] = ((packet[idx+3] << 8) | (packet[idx+4]))
+                        if imu_data[i] & 0x8000:
+                            imu_data[i] = (~(imu_data[i] & 0x7FFF) + 1)
+                        imu_data[i] = imu_data[i] / 100.0
+                return imu_data
 
 
 #    def rx_head_packet(self):
