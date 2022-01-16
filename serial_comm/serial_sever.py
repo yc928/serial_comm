@@ -14,7 +14,7 @@ class SerialSever():
 
     def ini_serial(self):
         #self.head_serial = serial.Serial(port='/dev/ttyUSB1', baudrate=115200, bytesize=8, timeout=.1)
-        self.walk_serial = None
+        self.walk_serial = serial.Serial(port='/dev/ttyUSB0', baudrate=115200, bytesize=8, timeout=.1)
         self.head_serial = serial.Serial(port='/dev/ttyS1', baudrate=115200, bytesize=8, timeout=.1)
         self.imu_serial = serial.Serial(port='/dev/ttyS0', baudrate=115200, bytesize=8, timeout=.1)
         
@@ -36,18 +36,19 @@ class SerialSever():
         self.imu_serial.write(self.tku_packet.get_imu_val_packet.tobytes())
         time.sleep(0.05)
     
-    def tx_generate_walk_packet(self, walk_info):
+    def tx_generate_walk_packet(self, walk_info, walk_cmd):
+        #print("walk_info.walking_mode:", walk_info.walking_mode)
         params_packet = self.tku_packet.update_params_packet(walk_info.walking_mode)
         self.walk_serial.write(params_packet.tobytes())
         time.sleep(0.05)
-        self.tku_packet.update_walk_packet(walk_info)
+        self.tku_packet.update_walk_packet(walk_info, walk_cmd)
         self.walk_serial.write(self.tku_packet.walk_packet.tobytes())
         time.sleep(0.05)
-        print(params_packet.tobytes())
-        print(self.tku_packet.walk_packet.tobytes())
+        #print(params_packet.tobytes())
+        #print(self.tku_packet.walk_packet.tobytes())
 
-    def tx_change_walk_data(self, walk_info):
-        self.tku_packet.update_walk_packet(walk_info)
+    def tx_change_walk_data(self, walk_info, walk_cmd):
+        self.tku_packet.update_walk_packet(walk_info, walk_cmd)
         self.walk_serial.write(self.tku_packet.walk_packet.tobytes())
         time.sleep(0.05)
 
@@ -72,6 +73,7 @@ class SerialSever():
                             imu_data[i] = (~(imu_data[i] & 0x7FFF) + 1)
                         imu_data[i] = imu_data[i] / 100.0
                 return imu_data
+                
 
 
 #    def rx_head_packet(self):

@@ -12,6 +12,7 @@ from tku_msgs.msg import SensorSet
 from tku_msgs.msg import SensorPackage
 from tku_msgs.msg import Interface
 from tku_msgs.msg import Parameter
+from tku_msgs.msg import Walking
 
 from tku_msgs.srv import WalkingGaitParameter
 
@@ -56,20 +57,31 @@ class SerialPacket(Node):
                 10)
         self.save_walk_params_sub
         
+        #self.continuous_back_sub = self.create_subscription(
+        #        Bool, 
+        #        '/walkinggait/Continuousback',
+        #        self.continuousback_callback,
+        #        10)
+        #self.continuous_back_sub
+        
         self.imu_data_pub = self.create_publisher(SensorPackage, '/package/sensorpackage', 1)
 
         self.load_walk_params_srv = self.create_service(WalkingGaitParameter, '/web/LoadWalkingGaitParameter', self.load_walk_params_callback) 
 
         self.serial_server = SerialSever()
         
+        #self.continuousback_flag = False
+        self.walk_params_filename = {1: 'continuous_params', 2: 'lc_up_params', 3: 'lc_down_params'}
+        
         
     def imu_pub(self, data):
-        sensor_package = SensorPackage()
-        for i in range(len(data)):
-            sensor_package.imudata.append(data[i])
-            #print(data)
-        self.imu_data_pub.publish(sensor_package)
-        time.sleep(0.05)
+        if data:
+            sensor_package = SensorPackage()
+            for i in range(len(data)):
+                sensor_package.imudata.append(data[i])
+                #print(data)
+            self.imu_data_pub.publish(sensor_package)
+            time.sleep(0.05)
     
     def head_callback(self, head_info):
         self.serial_server.tx_head_packet(head_info)
@@ -78,16 +90,41 @@ class SerialPacket(Node):
         self.serial_server.tx_imu_packet(imu_info)
 
     def generate_callback(self, walk_info):
-        self.serial_server.tx_generate_walk_packet(walk_info)
+        self.serial_server.tx_generate_walk_packet(walk_info, 0x02)
 
     def change_walk_data_callback(self, walk_info):
-        self.serial_server.tx_change_walk_data(walk_info)
+        self.serial_server.tx_change_walk_data(walk_info, 0x04)
+        
+    #def continuousback_callback(self, msg):
+    #    self.continuousback_flag = msg.data
 
     def save_params_callback(self, params_info):
+        #print("in save")
         self.serial_server.tku_packet.save_params(params_info)
 
-    def load_walk_params_callback(self, mode, response):
-        response.x_swing_range, response.y_swing_range, response.z_swing_range, response.period_t, response.period_t2, response.sample_time, response.osc_lockrange, response.base_default_z, response.y_swing_shift, response.x_swing_com, response.base_lift_z = load_params(mode)
+    def load_walk_params_callback(self, request, response):
+        param = self.serial_server.tku_packet.load_params(self.walk_params_filename[request.mode])
+        #print(param)
+        #for k, v in param.items():
+        #    print(k, v, type(v))
+        if request.mode == 1:
+            response.period_t = param["period_t"]
+            response.base_default_z = param["base_default_z"]
+            response.osc_lockrange = param["osc_lockrange"]
+            return response
+        elif request.mode == 2 or request.mode == 3:
+            response.x_swing_range = param["x_swing_range"] 
+            response.y_swing_range = param["y_swing_range"] 
+            response.z_swing_range = param["z_swing_range"] 
+            response.period_t = param["period_t"] 
+            response.period_t2 = param["period_t2"] 
+            response.sample_time = param["sample_time"] 
+            response.osc_lockrange = param["osc_lockrange"] 
+            response.base_default_z = param["base_default_z"] 
+            response.y_swing_shift = param["y_swing_shift"] 
+            response.x_swing_com = param["x_swing_com"] 
+            response.base_lift_z = param["base_lift_z"]
+            return response
 
 
 def spin_thread(node):
