@@ -64,15 +64,27 @@ class SerialSever():
         imu_data = [0, 0, 0]
         if self.imu_serial.inWaiting():
             packet = self.imu_serial.read(28)
-            if len(packet) == 28:
-                if packet[0] == 0x53 and packet[1] == 0x54 and packet[2] == 0xF7 and packet[27] == 0x45:
-                    for i in range(3):
-                        idx = i*2
-                        imu_data[i] = ((packet[idx+3] << 8) | (packet[idx+4]))
-                        if imu_data[i] & 0x8000:
-                            imu_data[i] = (~(imu_data[i] & 0x7FFF) + 1)
-                        imu_data[i] = imu_data[i] / 100.0
+            if len(packet) == 28 and packet[0] == 0x53 and packet[1] == 0x54 \
+                and packet[2] == 0xF7 and packet[-1] == 0x45:
+               
+                for i in range(3):
+                    idx = i*2
+                    imu_data[i] = ((packet[idx+3] << 8) | (packet[idx+4]))
+                    
+                    if imu_data[i] & 0x8000:
+                        imu_data[i] = (~(imu_data[i] & 0x7FFF) + 1)
+                        
+                    imu_data[i] = imu_data[i] / 100.0
+                    
                 return imu_data
+                
+    def rx_dio_packet(self):
+        dio_data = 0
+        if self.walk_serial.inWaiting():
+            packet = self.walk_serial.read(4)
+            if packet[0] == 0x53 and packet[1] == 0x55:
+                dio_data = packet[2]
+            return dio_data
                 
 
 

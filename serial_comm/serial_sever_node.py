@@ -7,6 +7,7 @@ from rclpy.node import Node
 from serial_comm.serial_sever import SerialSever
 
 from std_msgs.msg import Bool
+from std_msgs.msg import UInt8
 from tku_msgs.msg import HeadPackage
 from tku_msgs.msg import SensorSet
 from tku_msgs.msg import SensorPackage
@@ -65,6 +66,7 @@ class SerialPacket(Node):
         #self.continuous_back_sub
         
         self.imu_data_pub = self.create_publisher(SensorPackage, '/package/sensorpackage', 1)
+        self.dio_data_pub = self.create_publisher(UInt8, '/package/FPGAack', 1)
 
         self.load_walk_params_srv = self.create_service(WalkingGaitParameter, '/web/LoadWalkingGaitParameter', self.load_walk_params_callback) 
 
@@ -82,6 +84,7 @@ class SerialPacket(Node):
                 #print(data)
             self.imu_data_pub.publish(sensor_package)
             time.sleep(0.05)
+            
     
     def head_callback(self, head_info):
         self.serial_server.tx_head_packet(head_info)
@@ -143,6 +146,10 @@ def main(args=None):
         serial_server_node.serial_server.tx_get_imu_packet()
         imu_data = serial_server_node.serial_server.rx_imu_packet()
         serial_server_node.imu_pub(imu_data)
+        
+        dio_data = serial_server_node.serial_server.rx_dio_packet()
+        if dio_data is not None:
+            serial_server_node.dio_data_pub(dio_data)
         #print("spin")
         #rclpy.spin_once(serial_server_node)
     #rclpy.spin(serial_sever_node)
