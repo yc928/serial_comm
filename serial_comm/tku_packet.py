@@ -166,3 +166,11 @@ class TKUPacket():
             return params
 
 
+    def packet_motion_packet(self, action_mode, motion_info):
+
+        motion_packet = [0x53, 0x54, action_mode]
+        motion_packet += motion_info
+
+        motion_packet = np.array(motion_packet,  dtype=np.uint8)
+
+        return motion_packet

@@ -1,5 +1,81 @@
 import re
 
+def save_action_packet(save_path, action_mode, action_angle_list, action_speed_list, action_delay_list):
+    
+    def get_lo_hi_byte(value):
+        if value < 0:
+            value = ~value + 1
+            hi_byte = ((value >> 8) & 0xFF) | 0x80
+            lo_byte = value & 0xFF
+        else:
+            hi_byte = ((value >> 8) & 0xFF)
+            lo_byte = value & 0xFF
+
+        return lo_byte, hi_byte
+
+    def motor_packet_format(motor_angles, motor_speed):
+
+        motor_packet = []
+
+        for angle, speed in zip(motor_angles, motor_speed):
+
+            motor_packet += list(get_lo_hi_byte(speed))
+            motor_packet += list(get_lo_hi_byte(angle))
+
+        _save_format = list(map(str, motor_packet))
+        _save_format = " |  ".join(_save_format)
+
+        _save_format = "Motor_Packet = " + _save_format
+
+        return _save_format
+
+
+    save_data = []
+    save_data.append("Mode = {}".format(action_mode))
+
+    for  motor_angles, motor_speed, delay in \
+            zip(action_angle_list, action_speed_list, action_delay_list):
+
+        motor_packet = motor_packet_format(motor_angles, motor_speed)
+
+        save_data.append(motor_packet)
+        save_data.append("Delay = {}".format(delay))
+
+    with open(save_path, 'w') as _file:
+        _file.write('\n'.join(save_data))
+
+
+def read_action_packet(save_path):
+
+    motion_info = {"action_mode": 0, "motor_packet": [], "delay": []}
+
+    with open(save_path, 'r') as _file:
+
+        read_info = iter(_file.readlines())
+
+        motion_cnt = next(read_info)
+
+        motion_info['action_mode'] = int(re.findall(r"Mode = (\d+)", motion_cnt)[0])
+        
+        while True:
+            try:
+                # motor_packet
+                motor_info = next(read_info)
+                motor_info = re.findall(r" (\d+)", motor_info)
+                motor_info = list(map(int, motor_info))
+                motion_info["motor_packet"].append(motor_info)
+
+                # delay
+                _delay = next(read_info)
+                _delay = int(re.findall(r"Delay = (\d+)", _delay)[0])
+                motion_info["delay"].append(_delay)
+
+            except StopIteration:
+                break
+
+    return motion_info
+
+
 def save_motion_table(save_path, motion_table):
 
     def action_format(action_list):

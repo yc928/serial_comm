@@ -18,7 +18,9 @@ from tku_msgs.msg import Interface
 from tku_msgs.msg import Parameter
 from tku_msgs.msg import Walking
 from tku_msgs.msg import SaveMotion
+from tku_msgs.msg import MotorAction
 from tku_msgs.srv import ReadMotion
+from tku_msgs.srv import ExecuteSector
 
 
 from tku_msgs.srv import WalkingGaitParameter
@@ -71,7 +73,15 @@ class SerialPacket(Node):
                 10)
         self.save_motion_sub
 
+        self.save_motion_packet_sub = self.create_subscription(
+                MotorAction,
+                '/package/InterfaceSend2Sector',
+                self.save_motion_packet_callback,
+                10)
+        self.save_motion_packet_sub
+
         self.read_motion_srv = self.create_service(ReadMotion, '/package/InterfaceReadSaveMotion', self.read_motion_callback)
+        self.excute_sector_srv = self.create_service(ExecuteSector, '/package/ExecuteSector', self.excute_sector_callback)
 
         self.motion_table = {"cnt": 0, "action_list": [], "motor_list": []}
 
@@ -102,9 +112,34 @@ class SerialPacket(Node):
             self.imu_data_pub.publish(sensor_package)
             time.sleep(0.05)
             
+    def excute_sector_callback(self, request, response):
+
+        file_name = str(request.sector) + ".ini"
+        save_path = os.path.join(os.getcwd(), file_name)
+        print(save_path)
+
+
+        motion_info = read_action_packet(save_path)
+        
+        self.serial_server.tx_motion_packet(motion_info["action_mode"], motion_info["motor_packet"], motion_info["delay"])
+
+        response.done = True
+
+        return response
+
+    def save_motion_packet_callback(self, save_data):
+
+        print('save_motion_packet_callback')
+        file_name = save_data.sectorname + ".ini"
+        save_path = os.path.join(os.getcwd(), file_name)
+
+        action_angle_list = [list(motor_info.motor_angle) for motor_info in save_data.action_list]
+        action_speed_list = [list(motor_info.motor_speed) for motor_info in save_data.action_list]
+
+        save_action_packet(save_path, save_data.action_mode, action_angle_list, 
+                           action_speed_list, list(save_data.delay_list))
         
     def read_motion_callback(self, request, response):
-        print('read_motion_callback')
 
         file_path = os.path.join(os.getcwd(), request.name)
 

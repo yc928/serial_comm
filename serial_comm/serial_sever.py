@@ -17,6 +17,7 @@ class SerialSever():
         self.walk_serial = serial.Serial(port='/dev/ttyUSB0', baudrate=115200, bytesize=8, timeout=.1)
         self.head_serial = serial.Serial(port='/dev/ttyS1', baudrate=115200, bytesize=8, timeout=.1)
         self.imu_serial = serial.Serial(port='/dev/ttyS0', baudrate=115200, bytesize=8, timeout=.1)
+        pass
         
     def tx_head_packet(self, head_info):
         self.head_serial.write(self.head_motor.torque.tobytes())
@@ -87,6 +88,19 @@ class SerialSever():
             return dio_data
                 
 
+    def tx_motion_packet(self, action_mode, motion_info_list, delay_list):
+
+        for motion_info, delay in zip(motion_info_list, delay_list):
+            
+            motion_packet = self.tku_packet.packet_motion_packet(action_mode, motion_info)
+
+            #print("send motion packet", len(motion_packet))
+            #print(motion_packet)
+            self.walk_serial.write(motion_packet.tobytes())
+            time.sleep(0.05) # delay for tx packet
+
+            if delay:
+                time.sleep(delay * 0.001) # delay for motion act
 
 #    def rx_head_packet(self):
 #        #while True:
