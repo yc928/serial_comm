@@ -35,7 +35,7 @@ class TKUPacket():
                 hi_byte = ((value >> 8) & 0xFF) | 0x80
                 lo_byte = value & 0xFF
             else:
-                hi_byte = ((value >> 8) & 0xFF) | 0x80
+                hi_byte = ((value >> 8) & 0xFF)
                 lo_byte = value & 0xFF
 
             return hi_byte, lo_byte

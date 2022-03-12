@@ -80,9 +80,11 @@ class SerialSever():
                 return imu_data
                 
     def rx_dio_packet(self):
-        dio_data = 0
+        dio_data = None
         if self.walk_serial.inWaiting():
             packet = self.walk_serial.read(4)
+            #print('ack')
+            #print(packet)
             if packet[0] == 0x53 and packet[1] == 0x55:
                 dio_data = packet[2]
             return dio_data

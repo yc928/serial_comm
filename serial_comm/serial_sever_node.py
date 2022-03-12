@@ -112,6 +112,7 @@ class SerialPacket(Node):
             self.imu_data_pub.publish(sensor_package)
             time.sleep(0.05)
             
+            
     def excute_sector_callback(self, request, response):
 
         file_name = str(request.sector) + ".ini"
@@ -187,7 +188,13 @@ class SerialPacket(Node):
 
                 self.motion_table['motor_list'].append(_data)
 
-    
+
+    def dio_pub(self, data):
+        if data is not None:
+            dio_package = UInt8()
+            dio_package.data = data
+            print(dio_package.data)
+            self.dio_data_pub.publish(dio_package)      
 
     def head_callback(self, head_info):
         self.serial_server.tx_head_packet(head_info)
@@ -241,20 +248,22 @@ def main(args=None):
 
     serial_server_node = SerialPacket()
     
-    rclpy.spin(serial_server_node)
-    #while rclpy.ok():
-    #    #serial_sever_node.serial_sever.rx_head_packet()
-    #    #print('main')
-    #    serial_server_node.serial_server.tx_get_imu_packet()
-    #    imu_data = serial_server_node.serial_server.rx_imu_packet()
-    #    serial_server_node.imu_pub(imu_data)
-    #    
-    #    dio_data = serial_server_node.serial_server.rx_dio_packet()
-    #    if dio_data is not None:
-    #        serial_server_node.dio_data_pub(dio_data)
-    #    #print("spin")
-    #    #rclpy.spin_once(serial_server_node)
-    ##rclpy.spin(serial_sever_node)
+    _spin_thread = threading.Thread(target=spin_thread, args=(serial_server_node,))
+    _spin_thread.start()
+    while rclpy.ok():
+        #serial_sever_node.serial_sever.rx_head_packet()
+        #print('main')
+        serial_server_node.serial_server.tx_get_imu_packet()
+        imu_data = serial_server_node.serial_server.rx_imu_packet()
+        serial_server_node.imu_pub(imu_data)
+        
+        dio_data = serial_server_node.serial_server.rx_dio_packet()
+        if dio_data is not None:
+            serial_server_node.dio_pub(dio_data)
+
+        #print("spin")
+        #rclpy.spin_once(serial_server_node)
+    #rclpy.spin(serial_sever_node)
 
     serial_sever_node.destroy_node()
 
