@@ -153,7 +153,7 @@ def read_motion_table(save_path):
 
                 # motion or motor info
                 data_info = next(read_info)
-                data_info = re.findall(r" = (\d+)", data_info)
+                data_info = re.findall(r" = (-?\d+)", data_info)
                 data_info = list(map(int, data_info))
 
                 _data_array = state_array[state]
