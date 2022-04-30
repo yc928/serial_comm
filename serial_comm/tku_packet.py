@@ -78,7 +78,7 @@ class TKUPacket():
 
             return hi_byte, lo_byte
 
-        print("walking_mode:", walking_mode)
+        #print("walking_mode:", walking_mode)
         if walking_mode == 1: #0x00: single, 0x01:continue, 0x02:LC
             self.lipm_packet[12], self.lipm_packet[13] = get_hi_lo_byte(self.walk_params['continuous']['period_t'])
             _, self.lipm_packet[17] = get_multiple_hi_lo_byte(self.walk_params['continuous']['osc_lockrange'])        
