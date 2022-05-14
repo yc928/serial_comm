@@ -28,6 +28,8 @@ from tku_msgs.srv import WalkingGaitParameter
 
 class SerialPacket(Node):
 
+    params_cfg_path = './src/humanoid-ros2/params_config'
+
     def __init__(self):
         super().__init__('serial_sever_node')
 
@@ -116,7 +118,7 @@ class SerialPacket(Node):
     def excute_sector_callback(self, request, response):
 
         file_name = str(request.sector) + ".ini"
-        save_path = os.path.join(os.getcwd(), file_name)
+        save_path = os.path.join(self.params_cfg_path, file_name)
         print(save_path)
 
 
@@ -132,7 +134,7 @@ class SerialPacket(Node):
 
         print('save_motion_packet_callback')
         file_name = save_data.sectorname + ".ini"
-        save_path = os.path.join(os.getcwd(), file_name)
+        save_path = os.path.join(self.params_cfg_path, file_name)
 
         action_angle_list = [list(motor_info.motor_angle) for motor_info in save_data.action_list]
         action_speed_list = [list(motor_info.motor_speed) for motor_info in save_data.action_list]
@@ -142,7 +144,7 @@ class SerialPacket(Node):
         
     def read_motion_callback(self, request, response):
 
-        file_path = os.path.join(os.getcwd(), request.name)
+        file_path = os.path.join(self.params_cfg_path, request.name)
 
         motion_info = read_motion_table(file_path)
 
@@ -163,7 +165,7 @@ class SerialPacket(Node):
         if save_data.saveflag:
 
             #save_path = os.path.expanduser('~/some/directory/file.txt')
-            save_path = os.path.join(os.getcwd(), save_data.name)
+            save_path = os.path.join(self.params_cfg_path, save_data.name)
 
             save_motion_table(save_path, self.motion_table)
 
